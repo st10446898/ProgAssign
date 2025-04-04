@@ -21,7 +21,7 @@ jobs:
       Wap_Project_Path: MyApp.Package\MyApp.Package.wapproj
 
     steps:
-    - name: Checkout
+    - name: Checkout repository
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
@@ -31,17 +31,20 @@ jobs:
       with:
         dotnet-version: 8.0.x
 
-    - name: Setup MSBuild.exe
+    - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2
 
-    - name: Execute unit tests
-      run: dotnet test
+    - name: Restore dependencies
+      run: dotnet restore ${{ env.Solution_Name }}
 
-    - name: Restore the application
-      run: msbuild MyApp.sln /t:Restore /p:Configuration=${{ matrix.configuration }}
+    - name: Build solution
+      run: dotnet build ${{ env.Solution_Name }} --configuration ${{ matrix.configuration }} --no-restore
+
+    - name: Run unit tests
+      run: dotnet test ${{ env.Test_Project_Path }} --configuration ${{ matrix.configuration }} --no-build --verbosity normal
 
     - name: Create the app package
-      run: msbuild $env:Wap_Project_Path /p:Configuration=${{ matrix.configuration }} /p:AppxBundle=Always /p:UapAppxPackageBuildMode=StoreUpload
+      run: msbuild ${{ env.Wap_Project_Path }} /p:Configuration=${{ matrix.configuration }} /p:AppxBundle=Always /p:UapAppxPackageBuildMode=StoreUpload
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
