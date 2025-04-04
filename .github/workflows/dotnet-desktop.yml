@@ -29,13 +29,24 @@ jobs:
     - name: Install .NET Core
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: 8.0.x  # Change this if your project requires a different version
 
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2
 
+    - name: Cache NuGet packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Clear NuGet Cache
+      run: dotnet nuget locals all --clear
+
     - name: Restore dependencies
-      run: dotnet restore ${{ env.Solution_Name }}
+      run: dotnet restore ${{ env.Solution_Name }} --source https://api.nuget.org/v3/index.json
 
     - name: Build solution
       run: dotnet build ${{ env.Solution_Name }} --configuration ${{ matrix.configuration }} --no-restore
